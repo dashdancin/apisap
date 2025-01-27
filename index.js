@@ -2,24 +2,62 @@ const express = require("express");
 const app = express();
 const port = process.env.PORT || 3000;
 
-app.use(express.json());
+// Cargar variables de entorno
+require("dotenv").config();
+
+app.use(express.text()); // Usar middleware para recibir texto plano
+
+// Variables globales para almacenar el estado de la última solicitud
+let ultimoEstado = null;
+let ultimosDatosRecibidos = null;
+
+// Función para validar JSON
+function isValidJson(jsonString) {
+  try {
+    JSON.parse(jsonString);
+    return true;
+  } catch (e) {
+    return false;
+  }
+}
 
 // Ruta para la raíz del servidor
 app.get("/", (req, res) => {
   res.send("API funcionando correctamente");
 });
 
-// Endpoint para recibir la solicitud de SAP
+// Endpoint para recibir la solicitud de SAP como texto plano y validar el JSON
 app.post("/recibir-factura", (req, res) => {
-  const facturaData = req.body;
+  try {
+    let rawFacturaData = req.body;
 
-  // Logs para ver los datos recibidos de SAP
-  console.log("Datos recibidos de SAP:", facturaData);
+    // Verificar que rawFacturaData es una cadena de texto
+    if (typeof rawFacturaData !== "string") {
+      throw new Error("Invalid input format");
+    }
 
-  // Responder con los datos recibidos (para pruebas)
-  res.status(200).send({
-    message: "Datos recibidos",
-    data: facturaData,
+    // Validar JSON
+    const esJsonValido = isValidJson(rawFacturaData);
+
+    // Almacenar los datos de la última solicitud
+    ultimoEstado = esJsonValido ? "JSON válido" : "JSON inválido";
+    ultimosDatosRecibidos = rawFacturaData;
+
+    // Responder con el estado de la validación
+    res.status(200).send({ message: ultimoEstado });
+  } catch (error) {
+    // Manejo de errores
+    console.error("Error al procesar el JSON:", error.message);
+    ultimoEstado = `Error al procesar el JSON: ${error.message}`;
+    res.status(400).send({ error: "BadRequest", message: error.message });
+  }
+});
+
+// Nuevo endpoint para devolver el estado de la última solicitud
+app.get("/estado-ultima-solicitud", (req, res) => {
+  res.send({
+    estado: ultimoEstado,
+    datosRecibidos: ultimosDatosRecibidos,
   });
 });
 
