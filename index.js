@@ -5,7 +5,8 @@ const port = process.env.PORT || 3000;
 // Cargar variables de entorno
 require("dotenv").config();
 
-app.use(express.text()); // Usar middleware para recibir texto plano
+// Middleware para recibir texto plano
+app.use(express.text({ type: "*/*" })); // Asegurarnos de aceptar cualquier tipo de contenido
 
 // Variables globales para almacenar el estado de la última solicitud
 let ultimoEstado = null;
@@ -29,6 +30,7 @@ app.get("/", (req, res) => {
 // Endpoint para recibir la solicitud de SAP como texto plano y validar el JSON
 app.post("/recibir-factura", (req, res) => {
   try {
+    console.log("Tipo de contenido:", req.headers["content-type"]); // Log del tipo de contenido
     console.log("Datos recibidos de SAP:", req.body);
 
     let rawFacturaData = req.body;
