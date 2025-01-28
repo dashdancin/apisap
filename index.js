@@ -11,6 +11,7 @@ app.use(express.text({ type: "*/*" })); // Asegurarnos de aceptar cualquier tipo
 // Variables globales para almacenar el estado de la última solicitud
 let ultimoEstado = null;
 let ultimosDatosRecibidos = null;
+let ultimoJsonConvertido = null;
 
 // Función para validar JSON
 function isValidJson(jsonString) {
@@ -27,7 +28,7 @@ app.get("/", (req, res) => {
   res.send("API funcionando correctamente");
 });
 
-// Endpoint para recibir la solicitud de SAP como texto plano y validar el JSON
+// Endpoint para recibir la solicitud de SAP como texto plano, validar el JSON y convertirlo
 app.post("/recibir-factura", (req, res) => {
   try {
     console.log("Tipo de contenido:", req.headers["content-type"]); // Log del tipo de contenido
@@ -46,9 +47,13 @@ app.post("/recibir-factura", (req, res) => {
     // Almacenar los datos de la última solicitud
     ultimoEstado = esJsonValido ? "JSON válido" : "JSON inválido";
     ultimosDatosRecibidos = rawFacturaData;
+    ultimoJsonConvertido = esJsonValido ? JSON.parse(rawFacturaData) : null;
 
     // Responder con el estado de la validación
-    res.status(200).send({ message: ultimoEstado });
+    res.status(200).send({
+      message: ultimoEstado,
+      jsonConvertido: ultimoJsonConvertido,
+    });
   } catch (error) {
     // Manejo de errores
     console.error("Error al procesar el JSON:", error.message);
@@ -62,6 +67,7 @@ app.get("/estado-ultima-solicitud", (req, res) => {
   res.send({
     estado: ultimoEstado,
     datosRecibidos: ultimosDatosRecibidos,
+    jsonConvertido: ultimoJsonConvertido,
   });
 });
 
