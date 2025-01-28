@@ -29,6 +29,8 @@ app.get("/", (req, res) => {
 // Endpoint para recibir la solicitud de SAP como texto plano y validar el JSON
 app.post("/recibir-factura", (req, res) => {
   try {
+    console.log("Datos recibidos de SAP:", req.body);
+
     let rawFacturaData = req.body;
 
     // Verificar que rawFacturaData es una cadena de texto
