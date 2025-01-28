@@ -1,9 +1,7 @@
 const express = require("express");
+const axios = require("axios");
 const app = express();
 const port = process.env.PORT || 3000;
-
-// Cargar variables de entorno
-require("dotenv").config();
 
 // Middleware para recibir texto plano
 app.use(express.text({ type: "*/*" })); // Asegurarnos de aceptar cualquier tipo de contenido
@@ -29,7 +27,7 @@ app.get("/", (req, res) => {
 });
 
 // Endpoint para recibir la solicitud de SAP como texto plano, validar el JSON y convertirlo
-app.post("/recibir-factura", (req, res) => {
+app.post("/recibir-factura", async (req, res) => {
   try {
     console.log("Tipo de contenido:", req.headers["content-type"]); // Log del tipo de contenido
     console.log("Datos recibidos de SAP:", req.body);
@@ -49,11 +47,41 @@ app.post("/recibir-factura", (req, res) => {
     ultimosDatosRecibidos = rawFacturaData;
     ultimoJsonConvertido = esJsonValido ? JSON.parse(rawFacturaData) : null;
 
-    // Responder con el estado de la validación
-    res.status(200).send({
-      message: ultimoEstado,
-      jsonConvertido: ultimoJsonConvertido,
-    });
+    if (esJsonValido) {
+      // Enviar datos a Facturama
+      try {
+        const response = await axios.post(
+          "https://api.facturama.mx/3/cfdis/",
+          ultimoJsonConvertido,
+          {
+            auth: {
+              username: process.env.FACTURAMA_USER,
+              password: process.env.FACTURAMA_PASSWORD,
+            },
+          }
+        );
+        console.log("Respuesta de Facturama:", response.data);
+        ultimoEstado = "Datos enviados a Facturama correctamente";
+        res.status(200).send({
+          message: ultimoEstado,
+          jsonConvertido: ultimoJsonConvertido,
+          respuestaFacturama: response.data,
+        });
+      } catch (error) {
+        console.error("Error al enviar datos a Facturama:", error.message);
+        ultimoEstado = `Error al enviar datos a Facturama: ${error.message}`;
+        res.status(500).send({
+          error: "Internal Server Error",
+          message: `Error al enviar datos a Facturama: ${error.message}`,
+        });
+      }
+    } else {
+      // Responder con el estado de la validación
+      res.status(200).send({
+        message: ultimoEstado,
+        jsonConvertido: ultimoJsonConvertido,
+      });
+    }
   } catch (error) {
     // Manejo de errores
     console.error("Error al procesar el JSON:", error.message);
