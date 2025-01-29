@@ -30,7 +30,7 @@ app.post("/recibir-factura", async (req, res) => {
 
     // Enviar datos a Facturama sin validar el JSON
     try {
-
+      rawFacturaData = rawFacturaData.replace("'",'"')
       var invoice = JSON.parse(rawFacturaData.replace("'",'"'));
       ultimosDatosRecibidos = invoice;
 
