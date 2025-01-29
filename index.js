@@ -5,6 +5,7 @@ const port = process.env.PORT || 3000;
 
 app.use(express.text({ type: "*/*" }));
 
+
 let ultimoEstado = null;
 let ultimosDatosRecibidos = null;
 
@@ -18,9 +19,11 @@ app.post("/recibir-factura", async (req, res) => {
     console.log("Tipo de contenido:", req.headers["content-type"]);
     console.log("Datos recibidos de SAP:", req.body);
 
+    var authFact = req.headers["authorization"]; 
+
     let rawFacturaData = req.body;
-    rawFacturaData = rawFacturaData.replace("'",'"');
-    
+    rawFacturaData = rawFacturaData.replaceAll('\'', '"');
+
     // Verificar que rawFacturaData es una cadena de texto
     if (typeof rawFacturaData !== "string") {
       throw new Error("Formato de entrada no válido");
@@ -31,8 +34,8 @@ app.post("/recibir-factura", async (req, res) => {
 
     // Enviar datos a Facturama sin validar el JSON
     try {
-      rawFacturaData = rawFacturaData.replace("'",'"')
-      var invoice = JSON.parse(rawFacturaData.replace("'",'"'));
+      
+      var invoice = JSON.parse(rawFacturaData);
       ultimosDatosRecibidos = invoice;
 
       const response = await axios.post(
@@ -40,12 +43,9 @@ app.post("/recibir-factura", async (req, res) => {
         invoice,
         {
           headers: {
-            "Content-Type": "application/json",
+            "Content-Type": "application/json", "authorization":authFact
           },
-          auth: {
-            username: process.env.FACTURAMA_USER,
-            password: process.env.FACTURAMA_PASSWORD,
-          },
+
         }
       );
       console.log("Respuesta de Facturama:", response.data);
@@ -70,9 +70,51 @@ app.post("/recibir-factura", async (req, res) => {
   }
 });
 
+
+app.post("/recibir-archivo", async (req, res) => {
+  try {
+
+    let invoiceID = req.body;
+   
+    try {
+      
+      
+
+      const response = await axios.get(
+        "https://api.facturama.mx/"+req.body,
+        
+        {
+          headers: {
+            "Content-Type": "application/json", "authorization":authFact
+          },
+
+        }
+      );
+      
+     
+      res.status(200).send({
+        respuestaFacturama: response.data,
+      });
+    } catch (error) {
+      console.error("Error al enviar datos a Facturama:", error.message);
+      ultimoEstado = `Error al enviar datos a Facturama: ${error.message}`;
+      res.status(500).send({
+        error: "Internal Server Error",
+        message: `Error al enviar datos a Facturama: ${error.message}`,
+      });
+    }
+  } catch (error) {
+    console.error("Error al procesar la solicitud:", error.message);
+    ultimoEstado = `Error al procesar la solicitud: ${error.message}`;
+    res.status(400).send({ error: "BadRequest", message: error.message });
+  }
+});
+
+
 // Devolver el estado de la última solicitud
 app.get("/estado-ultima-solicitud", (req, res) => {
   res.send({
+   
     estado: ultimoEstado,
     datosRecibidos: ultimosDatosRecibidos,
   });
