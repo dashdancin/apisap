@@ -78,7 +78,9 @@ app.post("/recibir-archivo", async (req, res) => {
    
     try {
       
-      
+
+
+      var authFact = req.headers["authorization"]; 
 
       const response = await axios.get(
         "https://api.facturama.mx/"+req.body,
