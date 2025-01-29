@@ -30,9 +30,13 @@ app.post("/recibir-factura", async (req, res) => {
 
     // Enviar datos a Facturama sin validar el JSON
     try {
+
+      var invoice = JSON.parse(rawFacturaData);
+      ultimosDatosRecibidos = invoice;
+
       const response = await axios.post(
         "https://api.facturama.mx/3/cfdis/",
-        rawFacturaData,
+        invoice,
         {
           headers: {
             "Content-Type": "application/json",
