@@ -9,7 +9,7 @@ let ultimoEstado = null;
 let ultimosDatosRecibidos = null;
 
 app.get("/", (req, res) => {
-  res.send("API funcionando correctamente");
+  res.send("API envía facturas a Facturama sin validación");
 });
 
 // Enviar info a Facturama sin validar
