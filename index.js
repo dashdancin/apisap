@@ -23,6 +23,7 @@ app.post("/recibir-factura", async (req, res) => {
 
     let rawFacturaData = req.body;
     rawFacturaData = rawFacturaData.replaceAll('\'', '"');
+    rawFacturaData = rawFacturaData.replaceAll('&amp;', '&');
 
     // Verificar que rawFacturaData es una cadena de texto
     if (typeof rawFacturaData !== "string") {
