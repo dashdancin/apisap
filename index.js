@@ -28,7 +28,7 @@ app.post("/recibir-factura", async (req, res) => {
     rawFacturaData = rawFacturaData.replace('"";', '\""');
     rawFacturaData = rawFacturaData.replace('%26', '&');
     rawFacturaData = rawFacturaData.replaceAll("#apostrophe", '\'');
-    rawFacturaData = rawFacturaData.replaceAll("#double", '\"');
+    rawFacturaData = rawFacturaData.replaceAll("#double", '\"\"');
     
 
 
